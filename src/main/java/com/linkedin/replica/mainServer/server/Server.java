@@ -2,9 +2,7 @@ package com.linkedin.replica.mainServer.server;
 
 import java.net.InetSocketAddress;
 
-import com.linkedin.replica.mainServer.server.handlers.RequestDecoderHandler;
-import com.linkedin.replica.mainServer.server.handlers.RequestProcessingHandler;
-import com.linkedin.replica.mainServer.server.handlers.ResponseEncoderHandler;
+
 
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -15,8 +13,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.handler.codec.http.HttpRequestDecoder;
-import io.netty.handler.codec.http.HttpResponseEncoder;
 
 public class Server {
 	private final String IP;
@@ -48,11 +44,11 @@ public class Server {
 
 						@Override
 						protected void initChannel(SocketChannel channel) throws Exception {
-							channel.pipeline().addLast(new HttpRequestDecoder()); // decode request bytes to FullHttpRequest (HttpRequest, HttpRequestContent, LastHttpRequestContent).
-							channel.pipeline().addLast(new HttpResponseEncoder());	 // encode FullHttpResponse to bytes.
-							channel.pipeline().addLast(new ResponseEncoderHandler()); // encode response object model into FullHttpResponse.
-							channel.pipeline().addLast(new RequestDecoderHandler()); // decode FullHttpRequest to request model.
-							channel.pipeline().addLast(new RequestProcessingHandler()); // process request object model and create response object model from results.
+//							channel.pipeline().addLast(new HttpRequestDecoder()); // decode request bytes to FullHttpRequest (HttpRequest, HttpRequestContent, LastHttpRequestContent).
+//							channel.pipeline().addLast(new HttpResponseEncoder());	 // encode FullHttpResponse to bytes.
+//							channel.pipeline().addLast(new ResponseEncoderHandler()); // encode response object model into FullHttpResponse.
+//							channel.pipeline().addLast(new RequestDecoderHandler()); // decode FullHttpRequest to request model.
+//							channel.pipeline().addLast(new RequestProcessingHandler()); // process request object model and create response object model from results.
 						}	
 					})
 					.option(ChannelOption.SO_BACKLOG, 128) // maximum queue length for incoming connection (a request to connect)
@@ -60,10 +56,9 @@ public class Server {
         			
 			// Bind and start to accept incoming connections.
         	InetSocketAddress socketAddress = new InetSocketAddress(IP, PORT);
-			ChannelFuture future = server.bind(socketAddress);
+			final ChannelFuture future = server.bind(socketAddress);
 			future.addListener(new ChannelFutureListener() {
 				
-				@Override
 				public void operationComplete(ChannelFuture ch) throws Exception {
 						if(ch.isSuccess()){
 							System.out.println("Server started at Host = "+IP +" and Port = "+PORT);
