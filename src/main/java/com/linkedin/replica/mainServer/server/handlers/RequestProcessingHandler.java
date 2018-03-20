@@ -23,6 +23,7 @@ public class RequestProcessingHandler extends ChannelInboundHandlerAdapter imple
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception
 	{	
         final String corrId = UUID.randomUUID().toString();
+        ResponseMessageReceiver.getInstance().addListener(corrId, this);
 		this.ctx = ctx;
 		Request request = (Request) msg;
 		String serviceName = Configuration.getInstance().getWebServConfigProp(request.getWebServName());
@@ -43,8 +44,8 @@ public class RequestProcessingHandler extends ChannelInboundHandlerAdapter imple
         	json.addProperty("commandName", Configuration.getInstance().getCommandConfigProp(request.getWebServName()+"."+request.getFuncName()));
 
         // public message to queue
-		channel.basicPublish("",queueName,replyProps, json.toString().getBytes());
-		ResponseMessageReceiver.getInstance().addListener(corrId, this);
+		channel.basicPublish("",queueName, replyProps, json.toString().getBytes());
+		channel.close();
 	}
 
 	

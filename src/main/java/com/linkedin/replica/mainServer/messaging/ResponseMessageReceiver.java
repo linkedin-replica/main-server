@@ -4,6 +4,7 @@ import io.netty.util.CharsetUtil;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
 import com.linkedin.replica.mainServer.config.Configuration;
@@ -11,7 +12,7 @@ import com.rabbitmq.client.*;
 
 
 public class ResponseMessageReceiver {
-	private static final HashMap<String, OnResponseListener> responseListeners = new HashMap<String, OnResponseListener>();
+	private static final ConcurrentHashMap<String, OnResponseListener> responseListeners = new ConcurrentHashMap<String, OnResponseListener>();
 	private static Channel channel;
 	
 	private static  ResponseMessageReceiver instance;
@@ -24,7 +25,8 @@ public class ResponseMessageReceiver {
         Connection con = factory.newConnection();
         channel = con.createChannel();
         Consumer consumer = initConsumer();
-        channel.queueDeclare(queueName, false, true, true, null);
+
+        channel.queueDeclare(queueName, false, false, false, null);
         channel.basicConsume(queueName, true, consumer);
 	}
 	
@@ -45,10 +47,9 @@ public class ResponseMessageReceiver {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope,
                                        AMQP.BasicProperties properties, byte[] body) throws IOException {
-                
             	// get correlationID
             	String correlationID = properties.getCorrelationId();
-           	
+
                 // Extract the request arguments
                 String responseBody = new String(body, CharsetUtil.UTF_8);
 

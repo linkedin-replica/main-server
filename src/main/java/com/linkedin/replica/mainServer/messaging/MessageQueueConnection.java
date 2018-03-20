@@ -40,4 +40,9 @@ public class MessageQueueConnection {
 		return queuesConnections.get(service).createChannel();
 	}
 	
+	public void closeConnections() throws IOException {
+		for(Connection c: queuesConnections.values())
+			c.close();
+	}
+	
 }
