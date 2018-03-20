@@ -22,9 +22,7 @@ public class RequestDecoderHandler extends ChannelInboundHandlerAdapter{
 	}
 	
 	@Override
-	public void channelRead(ChannelHandlerContext ctx, Object msg)
-			throws Exception {
-		
+	public void channelRead(ChannelHandlerContext ctx, Object msg)	throws Exception {
 		/*
 		 * check if request is valid
 		 */
@@ -35,11 +33,34 @@ public class RequestDecoderHandler extends ChannelInboundHandlerAdapter{
 			 *  uriArr[0] = webSrevice uri
 			 *  uriArr[1] = query parameters separated by & symbol
 			 */
-			String[] uriArr = httpRequest.uri().split("?");
+			int queryStringIdx = httpRequest.uri().indexOf('?');
+			String queryParams = null;
+			String requestURI;
+			if(queryStringIdx == -1) {
+				// no query string passed
+				requestURI = httpRequest.uri();
+			}else {
+				requestURI = httpRequest.uri().substring(0, queryStringIdx);
+				queryParams = httpRequest.uri().substring(queryStringIdx + 1);
+			}
 			
+			/*
+			 * uriContents should contains:
+			 * requestURI = /api/search/companies?searchKey
+			 *	uriContents[1] = api
+			 *	uriContents[2] = {webServiceName} eg. notifications/search/wall
+			 *	uriContents[3] = {functionalityName} eg. mark/set
+			 */
+			String[] uriContents = requestURI.split("/");
 			// set attributes of request model
-			request.setUri(uriArr[0]);
-			request.setQueryParams(uriArr[1]);
+			request.setRequestURI(requestURI);
+			request.setQueryParams(queryParams);
+			// set prefURI to be api.{webServiceName} eg. api.notifications
+			request.setWebServName(uriContents[1] + "." + uriContents[2]);
+			
+			if(uriContents.length == 4)
+				request.setFuncName(uriContents[3]);
+			
 			request.setHeaders(httpRequest.headers());
 			request.setMethod(httpRequest.method());
 		}

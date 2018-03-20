@@ -1,35 +1,50 @@
 package com.linkedin.replica.mainServer.server.handlers;
 
-import java.nio.file.InvalidPathException;
-import java.util.LinkedHashMap;
+import java.util.UUID;
 
 import com.google.gson.JsonObject;
-import com.linkedin.replica.serachEngine.Exceptions.SearchException;
-import com.linkedin.replica.serachEngine.services.ControllerService;
+import com.google.gson.JsonParser;
+import com.linkedin.replica.mainServer.config.Configuration;
+import com.linkedin.replica.mainServer.messaging.MessageQueueConnection;
+import com.linkedin.replica.mainServer.messaging.OnResponseListener;
+import com.linkedin.replica.mainServer.messaging.ResponseMessageReceiver;
+import com.linkedin.replica.mainServer.model.Request;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.http.HttpResponseStatus;
 
 
-public class RequestProcessingHandler extends ChannelInboundHandlerAdapter{
+public class RequestProcessingHandler extends ChannelInboundHandlerAdapter implements OnResponseListener{
+	private ChannelHandlerContext ctx;
 	
 	@Override
-	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-		// JSONObject body that was decoded by RequestDecoderHandler
-		JsonObject body = (JsonObject) msg;
+	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception
+	{	
+        final String corrId = UUID.randomUUID().toString();
+		this.ctx = ctx;
+		Request request = (Request) msg;
+		String serviceName = Configuration.getInstance().getWebServConfigProp(request.getWebServName());
+		String queueName = Configuration.getInstance().getWebServConfigProp(request.getWebServName()+".queue");
+		Channel channel = MessageQueueConnection.getInstance().newChannel(serviceName);
 
-		// pass body to ControllerService to serve the request
-		ControllerService.serve(body);
+        // Create the response message properties
+        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
+                .Builder()
+                .correlationId(corrId)
+                .replyTo(Configuration.getInstance().getAppConfigProp("rabbitmq.queue.name"))
+                .build();
+        
+        JsonObject json = parse(request.getBody(), request.getQueryParams());
+        if(request.getFuncName() == null)
+        	json.addProperty("commandName", Configuration.getInstance().getCommandConfigProp(request.getWebServName()));
+        else
+        	json.addProperty("commandName", Configuration.getInstance().getCommandConfigProp(request.getWebServName()+"."+request.getFuncName()));
 
-		// create successful response
-		LinkedHashMap<String, Object> responseBody = new LinkedHashMap<String, Object>();
-		responseBody.put("type", HttpResponseStatus.ACCEPTED);
-		responseBody.put("code", HttpResponseStatus.ACCEPTED.code());
-		responseBody.put("message", "Changes are applied successfully and configuration files are updated");
-		
-		// send response to ResponseEncoderHandler
-		ctx.writeAndFlush(responseBody);
+        // public message to queue
+		channel.basicPublish("",queueName,replyProps, json.toString().getBytes());
+		ResponseMessageReceiver.getInstance().addListener(corrId, this);
 	}
 
 	
@@ -39,26 +54,33 @@ public class RequestProcessingHandler extends ChannelInboundHandlerAdapter{
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
 			throws Exception {
-		// construct Error Response
-		LinkedHashMap<String, Object> responseBody = new LinkedHashMap<String, Object>();
+		cause.printStackTrace();
+	}
+
+	public void onResponse(String response) {
+		ctx.writeAndFlush(response);
+	}
+	
+	private JsonObject parse(String body, String queryStr){
+		JsonObject messageParams = new JsonObject();
 		
-		// set Http status code
-		if(cause instanceof InvalidPathException){
-			responseBody.put("code", HttpResponseStatus.NOT_FOUND.code());
-			responseBody.put("type", HttpResponseStatus.NOT_FOUND);
-		}else{ 
-			if (cause instanceof SearchException){
-				responseBody.put("code", HttpResponseStatus.BAD_REQUEST.code());
-				responseBody.put("type", HttpResponseStatus.BAD_REQUEST);
-			}else{
-				responseBody.put("code", HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
-				responseBody.put("type", HttpResponseStatus.INTERNAL_SERVER_ERROR);
+		if(queryStr != null){
+			String[] params = queryStr.split("&");
+			String[] keyVal;
+			
+			for(String param : params){
+				// eg. param = userId="Ahmed"
+				keyVal = param.split("=");
+				messageParams.addProperty(keyVal[0], keyVal[1].replace("\"", ""));
 			}
 		}
-		responseBody.put("errMessage", cause.getMessage());
 		
-//		cause.printStackTrace();
-		// send response to ResponseEncoderHandler
-		ctx.writeAndFlush(responseBody);
-	}	
+		if(body != null && !body.trim().isEmpty()){
+			JsonObject jsonBody = new JsonParser().parse(body).getAsJsonObject();
+			for(String key: jsonBody.keySet())
+				messageParams.add(key, jsonBody.get(key));
+		}
+		
+		return messageParams;
+	}
 }
