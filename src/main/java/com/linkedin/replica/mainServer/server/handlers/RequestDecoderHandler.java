@@ -28,11 +28,7 @@ public class RequestDecoderHandler extends ChannelInboundHandlerAdapter{
 		 */
 		if(msg instanceof HttpRequest){
 			HttpRequest httpRequest = (HttpRequest) msg;
-			/*
-			 *  split on start of query parameters to get an array of two strings where 
-			 *  uriArr[0] = webSrevice uri
-			 *  uriArr[1] = query parameters separated by & symbol
-			 */
+
 			int queryStringIdx = httpRequest.uri().indexOf('?');
 			String queryParams = null;
 			String requestURI;
