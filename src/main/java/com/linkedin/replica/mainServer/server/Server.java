@@ -1,8 +1,12 @@
 package com.linkedin.replica.mainServer.server;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 
-
+import com.linkedin.replica.mainServer.config.Configuration;
+import com.linkedin.replica.mainServer.server.handlers.RequestDecoderHandler;
+import com.linkedin.replica.mainServer.server.handlers.RequestProcessingHandler;
+import com.linkedin.replica.mainServer.server.handlers.ResponseEncoderHandler;
 
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -13,6 +17,8 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
 
 public class Server {
 	private final String IP;
@@ -41,14 +47,14 @@ public class Server {
         	server.group(bossGroup, workerGroup) // setting EventLoopGroups
         			.channel(NioServerSocketChannel.class) // set channel to NIO(non-blocking IO) transport channel
         			.childHandler(new ChannelInitializer<SocketChannel>() { // initialize channel
-
+        				
 						@Override
 						protected void initChannel(SocketChannel channel) throws Exception {
-//							channel.pipeline().addLast(new HttpRequestDecoder()); // decode request bytes to FullHttpRequest (HttpRequest, HttpRequestContent, LastHttpRequestContent).
-//							channel.pipeline().addLast(new HttpResponseEncoder());	 // encode FullHttpResponse to bytes.
-//							channel.pipeline().addLast(new ResponseEncoderHandler()); // encode response object model into FullHttpResponse.
-//							channel.pipeline().addLast(new RequestDecoderHandler()); // decode FullHttpRequest to request model.
-//							channel.pipeline().addLast(new RequestProcessingHandler()); // process request object model and create response object model from results.
+							channel.pipeline().addLast(new HttpRequestDecoder()); // decode request bytes to FullHttpRequest (HttpRequest, HttpRequestContent, LastHttpRequestContent).
+							channel.pipeline().addLast(new HttpResponseEncoder());	 // encode FullHttpResponse to bytes.
+							channel.pipeline().addLast(new ResponseEncoderHandler()); // encode response object model into FullHttpResponse.
+							channel.pipeline().addLast(new RequestDecoderHandler()); // decode FullHttpRequest to request model.
+							channel.pipeline().addLast(new RequestProcessingHandler()); // process request object model and create response object model from results.
 						}	
 					})
 					.option(ChannelOption.SO_BACKLOG, 128) // maximum queue length for incoming connection (a request to connect)
@@ -80,7 +86,14 @@ public class Server {
     
 	}
 	
+	
 	public void shutdown() throws InterruptedException{
 		bossGroup.shutdownGracefully().sync();
+	}
+	
+	public static void main(String[] args) throws IOException, InterruptedException {
+		Configuration.init("src/main/resources/webserv.microserv.config", "src/main/resources/webserv.command.config", "src/main/resources/app.config");
+		Server server = new Server("localhost", 8081);
+		server.start();
 	}
 }
