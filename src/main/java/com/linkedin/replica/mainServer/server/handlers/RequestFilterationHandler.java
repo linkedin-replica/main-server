@@ -50,14 +50,11 @@ public class RequestFilterationHandler extends ChannelInboundHandlerAdapter {
 		// set Http status code
 		if(cause instanceof InvalidPathException){
 			responseBody.put("statusCode", HttpResponseStatus.NOT_FOUND.code());
-//			responseBody.put("type", HttpResponseStatus.NOT_FOUND);
 		}else{ 
 			if (cause instanceof MainServerException){
 				responseBody.put("statusCode", HttpResponseStatus.BAD_REQUEST.code());
-//				responseBody.put("type", HttpResponseStatus.BAD_REQUEST);
 			}else{
 				responseBody.put("statusCode", HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
-//				responseBody.put("type", HttpResponseStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
 		responseBody.put("errMessage", cause.getMessage());
