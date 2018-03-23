@@ -46,6 +46,9 @@ public class RequestProcessingHandler extends ChannelInboundHandlerAdapter imple
 	                .build();
 	        
 	        json =  parse(request.getBody(), request.getQueryParams());
+	        if(request.getUserId() != null)
+	        	json.addProperty("userId",request.getUserId());
+	        
 	        if(request.getFuncName() == null)
 	        	json.addProperty("commandName", Configuration.getInstance().getCommandConfigProp(request.getWebServName()));
 	        else
