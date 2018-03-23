@@ -4,6 +4,7 @@ package com.linkedin.replica.mainServer.server.handlers;
 import java.nio.file.InvalidPathException;
 import java.util.LinkedHashMap;
 
+import com.google.gson.Gson;
 import com.linkedin.replica.mainServer.config.Configuration;
 import com.linkedin.replica.mainServer.exceptions.MainServerException;
 import com.linkedin.replica.mainServer.model.Request;
@@ -19,7 +20,6 @@ public class RequestFilterationHandler extends ChannelInboundHandlerAdapter {
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 			Request request = (Request) msg;
-			
 			// check if request URI is not a valid web service call
 			if(Configuration.getInstance().getWebServConfigProp(request.getWebServName()) == null 
 					&& Configuration.getInstance().getCommandConfigProp(request.getWebServName()+"."+request.getFuncName()) == null)
@@ -49,21 +49,21 @@ public class RequestFilterationHandler extends ChannelInboundHandlerAdapter {
 		
 		// set Http status code
 		if(cause instanceof InvalidPathException){
-			responseBody.put("code", HttpResponseStatus.NOT_FOUND.code());
-			responseBody.put("type", HttpResponseStatus.NOT_FOUND);
+			responseBody.put("statusCode", HttpResponseStatus.NOT_FOUND.code());
+//			responseBody.put("type", HttpResponseStatus.NOT_FOUND);
 		}else{ 
 			if (cause instanceof MainServerException){
-				responseBody.put("code", HttpResponseStatus.BAD_REQUEST.code());
-				responseBody.put("type", HttpResponseStatus.BAD_REQUEST);
+				responseBody.put("statusCode", HttpResponseStatus.BAD_REQUEST.code());
+//				responseBody.put("type", HttpResponseStatus.BAD_REQUEST);
 			}else{
-				responseBody.put("code", HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
-				responseBody.put("type", HttpResponseStatus.INTERNAL_SERVER_ERROR);
+				responseBody.put("statusCode", HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+//				responseBody.put("type", HttpResponseStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
 		responseBody.put("errMessage", cause.getMessage());
-	
+		String json = new Gson().toJson(responseBody);
 //		cause.printStackTrace();
 		// send response to ResponseEncoderHandler
-		ctx.writeAndFlush(responseBody);
+		ctx.writeAndFlush(json);
 	}
 }

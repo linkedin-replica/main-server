@@ -28,7 +28,6 @@ public class RequestDecoderHandler extends ChannelInboundHandlerAdapter{
 		 */
 		if(msg instanceof HttpRequest){
 			HttpRequest httpRequest = (HttpRequest) msg;
-
 			int queryStringIdx = httpRequest.uri().indexOf('?');
 			String queryParams = null;
 			String requestURI;
