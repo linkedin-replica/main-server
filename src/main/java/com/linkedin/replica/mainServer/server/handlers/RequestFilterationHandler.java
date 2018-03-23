@@ -1,5 +1,6 @@
 package com.linkedin.replica.mainServer.server.handlers;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.file.InvalidPathException;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -9,6 +10,9 @@ import com.linkedin.replica.mainServer.config.Configuration;
 import com.linkedin.replica.mainServer.exceptions.MainServerException;
 import com.linkedin.replica.mainServer.model.Request;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.HttpMethod;
@@ -49,11 +53,49 @@ public class RequestFilterationHandler extends ChannelInboundHandlerAdapter {
 				throw new MainServerException("Request Body must not be empty.");
 
 			String token = request.getHeaders().get("access-token");
-			// TODO validate token with secret key
-			// extract user Id
-			// add userId to request if needed
+
+			// Validate and extract user Id
+
+			String secretKey = Configuration.getInstance().getAppConfigProp("secret.key");
+
+			if(token != null) {
+				if(validateToken(token, secretKey))
+					request.setUserId(getClaims(token, secretKey).getBody().getId());
+				else
+					throw new MainServerException("Failed to validate token");
+			}
 
 			ctx.fireChannelRead(request);
+		}
+	}
+
+	/**
+	 * Get claims (stored data) from a valid token
+	 * @param token
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 */
+	private static Jws<Claims> getClaims(String token, String secretKey) throws UnsupportedEncodingException {
+		return Jwts.parser()
+				.setSigningKey(secretKey.getBytes("UTF-8"))
+				.parseClaimsJws(token);
+	}
+
+
+	/**
+	 * Validate jwt token
+	 *
+	 * @param token jwt token to be authenticated
+	 * @return Weather
+	 */
+
+	private static boolean validateToken(String token, String secretKey) {
+
+		try {
+			getClaims(token, secretKey);
+			return true;
+		} catch (Exception ex) {
+			return false;
 		}
 	}
 

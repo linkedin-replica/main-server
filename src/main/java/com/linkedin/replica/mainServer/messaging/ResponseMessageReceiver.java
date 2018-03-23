@@ -20,8 +20,13 @@ public class ResponseMessageReceiver {
 	private ResponseMessageReceiver () throws IOException, TimeoutException{
 		String queueName = Configuration.getInstance().getAppConfigProp("rabbitmq.queue.name");
 		String ip = Configuration.getInstance().getAppConfigProp("rabbitmq.ip");
+		String username = Configuration.getInstance().getAppConfigProp("rabbitmq.username");
+		String password = Configuration.getInstance().getAppConfigProp("rabbitmq.password");
+
 		ConnectionFactory factory = new ConnectionFactory();
 		factory.setHost(ip);
+		factory.setUsername(username);
+		factory.setPassword(password);
 		Connection con = factory.newConnection();
 		channel = con.createChannel();
         Consumer consumer = initConsumer();
