@@ -16,8 +16,10 @@ public class MessageQueueConnection {
 	
 	private MessageQueueConnection() throws IOException, TimeoutException{
 		ConnectionFactory factory = new ConnectionFactory();
+		factory.setUsername(Configuration.getInstance().getAppConfigProp("rabbitmq.username"));
+		factory.setPassword(Configuration.getInstance().getAppConfigProp("rabbitmq.password"));
 		factory.setHost(Configuration.getInstance().getAppConfigProp("rabbitmq.ip"));
-		
+
 		String[] services =  Configuration.getInstance().getAppConfigProp("services.names").split(",");
 		
 		for(String service : services)
