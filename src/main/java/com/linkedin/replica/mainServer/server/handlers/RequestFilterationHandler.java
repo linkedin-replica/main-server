@@ -1,6 +1,7 @@
 package com.linkedin.replica.mainServer.server.handlers;
 
 import java.nio.file.InvalidPathException;
+import java.util.Date;
 import java.util.LinkedHashMap;
 
 import com.google.gson.Gson;
@@ -19,7 +20,8 @@ public class RequestFilterationHandler extends ChannelInboundHandlerAdapter {
 	public void channelRead(ChannelHandlerContext ctx, Object msg)
 			throws Exception {
 		Request request = (Request) msg;
-
+		if(!request.getRequestURI().equals(Configuration.getInstance().getAppConfigProp("health.endpoint")))
+			System.out.printf("[%s][%s] %s\n", new Date().toString(), request.getMethod().name(), request.getRequestURI());
 		// check if request URI is not a valid web service call
 		if (request.getRequestURI()
 				.equals(Configuration.getInstance().getAppConfigProp(

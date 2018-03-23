@@ -20,7 +20,9 @@ public class Main {
 		Configuration.init(args[0], args[1], args[2]);
 		
 		// start the server
-		new Server("localhost", 8081).start();
+		String ip = Configuration.getInstance().getAppConfigProp("server.ip");
+		int port = Integer.parseInt(Configuration.getInstance().getAppConfigProp("server.port"));
+		new Server(ip, port).start();
 	}
 	
 	public static void shutdown() throws FileNotFoundException, ClassNotFoundException, IOException, SQLException{

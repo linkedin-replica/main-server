@@ -47,12 +47,13 @@ public class ResponseMessageReceiver {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope,
                                        AMQP.BasicProperties properties, byte[] body) throws IOException {
+//            	System.out.println("HERE");
             	// get correlationID
             	String correlationID = properties.getCorrelationId();
 
                 // Extract the request arguments
                 String responseBody = new String(body, CharsetUtil.UTF_8);
-
+//                System.out.println("received message from queue : "+ responseBody +" with correlation ID : "+ correlationID);
                 // call callback method in the channel waiting for response
                 responseListeners.get(correlationID).onResponse(responseBody);
                 // remove listener from map after calling it
