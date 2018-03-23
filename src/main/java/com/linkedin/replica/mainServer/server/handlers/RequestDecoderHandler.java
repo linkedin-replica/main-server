@@ -51,9 +51,11 @@ public class RequestDecoderHandler extends ChannelInboundHandlerAdapter{
 			request.setRequestURI(requestURI);
 			request.setQueryParams(queryParams);
 			// set prefURI to be api.{webServiceName} eg. api.notifications
-			request.setWebServName(uriContents[1] + "." + uriContents[2]);
+						
+			if(uriContents.length >= 3)
+				request.setWebServName(uriContents[1] + "." + uriContents[2]);
 			
-			if(uriContents.length == 4)
+			if(uriContents.length >= 4)
 				request.setFuncName(uriContents[3]);
 			
 			request.setHeaders(httpRequest.headers());
@@ -97,7 +99,7 @@ public class RequestDecoderHandler extends ChannelInboundHandlerAdapter{
 		responseBody.put("type", HttpResponseStatus.INTERNAL_SERVER_ERROR);
 		responseBody.put("errMessage", cause.getMessage());
 	
-//		cause.printStackTrace();
+		cause.printStackTrace();
 		
 		// send response to ResponseEncoderHandler
 		ctx.writeAndFlush(responseBody);

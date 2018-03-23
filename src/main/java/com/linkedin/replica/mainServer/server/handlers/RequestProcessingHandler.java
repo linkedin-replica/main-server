@@ -22,31 +22,39 @@ public class RequestProcessingHandler extends ChannelInboundHandlerAdapter imple
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) 
 			throws Exception{	
-		
-		final String corrId = UUID.randomUUID().toString();
-		ResponseMessageReceiver.getInstance().addListener(corrId, this);
-		this.ctx = ctx;
 		Request request = (Request) msg;
-		String serviceName = Configuration.getInstance().getWebServConfigProp(request.getWebServName());
-		String queueName = Configuration.getInstance().getWebServConfigProp(request.getWebServName()+".queue");
-		Channel channel = MessageQueueConnection.getInstance().newChannel(serviceName);
-
-        // Create the response message properties
-        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-                .Builder()
-                .correlationId(corrId)
-                .replyTo(Configuration.getInstance().getAppConfigProp("rabbitmq.queue.name"))
-                .build();
-        
-        JsonObject json = parse(request.getBody(), request.getQueryParams());
-        if(request.getFuncName() == null)
-        	json.addProperty("commandName", Configuration.getInstance().getCommandConfigProp(request.getWebServName()));
-        else
-        	json.addProperty("commandName", Configuration.getInstance().getCommandConfigProp(request.getWebServName()+"."+request.getFuncName()));
-        
-        // public message to queue
-        channel.basicPublish("",queueName, replyProps, json.toString().getBytes());
-        channel.close();
+		JsonObject json;
+		
+		if(request.getRequestURI().equals(Configuration.getInstance().getAppConfigProp("health.endpoint"))){
+			json = new JsonObject();
+			json.addProperty("statusCode", 200);
+			ctx.writeAndFlush(json);
+		}else{
+			
+			final String corrId = UUID.randomUUID().toString();
+			ResponseMessageReceiver.getInstance().addListener(corrId, this);
+			this.ctx = ctx;
+			String serviceName = Configuration.getInstance().getWebServConfigProp(request.getWebServName());
+			String queueName = Configuration.getInstance().getWebServConfigProp(request.getWebServName()+".queue");
+			Channel channel = MessageQueueConnection.getInstance().newChannel(serviceName);
+	
+	        // Create the response message properties
+	        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
+	                .Builder()
+	                .correlationId(corrId)
+	                .replyTo(Configuration.getInstance().getAppConfigProp("rabbitmq.queue.name"))
+	                .build();
+	        
+	        json =  parse(request.getBody(), request.getQueryParams());
+	        if(request.getFuncName() == null)
+	        	json.addProperty("commandName", Configuration.getInstance().getCommandConfigProp(request.getWebServName()));
+	        else
+	        	json.addProperty("commandName", Configuration.getInstance().getCommandConfigProp(request.getWebServName()+"."+request.getFuncName()));
+	        
+	        // public message to queue
+	        channel.basicPublish("",queueName, replyProps, json.toString().getBytes());
+	        channel.close();
+        }
 	}
 
 	
