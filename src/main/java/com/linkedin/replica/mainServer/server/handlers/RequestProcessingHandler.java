@@ -71,6 +71,7 @@ public class RequestProcessingHandler extends ChannelInboundHandlerAdapter imple
 	}
 
 	public void onResponse(String response) {
+//		System.out.println("Response is received : "+response);
 		ctx.writeAndFlush(response);
 	}
 	

@@ -26,7 +26,8 @@ public class ResponseEncoderHandler extends ChannelOutboundHandlerAdapter{
 		// construct FullHttpResponse
 		int statusCode = new JsonParser().parse(msg.toString()).getAsJsonObject().get("statusCode").getAsInt();
 		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.valueOf(statusCode),
-					Unpooled.copiedBuffer(out.toString(CharsetUtil.UTF_8), CharsetUtil.UTF_8));		 
+					Unpooled.copiedBuffer(out.toString(CharsetUtil.UTF_8), CharsetUtil.UTF_8));
+
 		// set headers
 	    response.headers().set(CONTENT_TYPE, "application/json; charset=UTF-8");
 	    // write response to HttpResponseEncoder 
