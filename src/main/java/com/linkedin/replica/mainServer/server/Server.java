@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 
 import com.linkedin.replica.mainServer.config.Configuration;
 import com.linkedin.replica.mainServer.server.handlers.RequestDecoderHandler;
+import com.linkedin.replica.mainServer.server.handlers.RequestFilterationHandler;
 import com.linkedin.replica.mainServer.server.handlers.RequestProcessingHandler;
 import com.linkedin.replica.mainServer.server.handlers.ResponseEncoderHandler;
 
@@ -54,6 +55,7 @@ public class Server {
 							channel.pipeline().addLast(new HttpResponseEncoder());	 // encode FullHttpResponse to bytes.
 							channel.pipeline().addLast(new ResponseEncoderHandler()); // encode response object model into FullHttpResponse.
 							channel.pipeline().addLast(new RequestDecoderHandler()); // decode FullHttpRequest to request model.
+							channel.pipeline().addLast(new RequestFilterationHandler()); // filter requests
 							channel.pipeline().addLast(new RequestProcessingHandler()); // process request object model and create response object model from results.
 						}	
 					})
