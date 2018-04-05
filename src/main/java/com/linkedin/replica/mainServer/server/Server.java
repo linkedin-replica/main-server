@@ -47,10 +47,10 @@ public class Server {
         	ServerBootstrap server = new ServerBootstrap();
         	server.group(bossGroup, workerGroup) // setting EventLoopGroups
         			.channel(NioServerSocketChannel.class) // set channel to NIO(non-blocking IO) transport channel
-        			.childHandler(new ChannelInitializer<SocketChannel>() { // initialize channel
+        			.childHandler(new ChannelInitializer<NioServerSocketChannel>() { // initialize channel
         				
 						@Override
-						protected void initChannel(SocketChannel channel) throws Exception {
+						protected void initChannel(NioServerSocketChannel channel) throws Exception {
 							channel.pipeline().addLast(new HttpRequestDecoder()); // decode request bytes to FullHttpRequest (HttpRequest, HttpRequestContent, LastHttpRequestContent).
 							channel.pipeline().addLast(new HttpResponseEncoder());	 // encode FullHttpResponse to bytes.
 							channel.pipeline().addLast(new ResponseEncoderHandler()); // encode response object model into FullHttpResponse.

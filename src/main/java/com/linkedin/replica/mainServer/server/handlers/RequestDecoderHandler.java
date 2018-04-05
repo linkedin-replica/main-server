@@ -2,6 +2,7 @@ package com.linkedin.replica.mainServer.server.handlers;
 
 import java.util.LinkedHashMap;
 
+import com.google.gson.JsonObject;
 import com.linkedin.replica.mainServer.model.Request;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -79,8 +80,12 @@ public class RequestDecoderHandler extends ChannelInboundHandlerAdapter{
 		if(msg instanceof LastHttpContent){	
 			// set body attribute of request to collected HttpContent (if exist)
 			request.setBody(builder.toString());
+			LastHttpContent lastHttpContent = (LastHttpContent) msg;
+			
 			// release object to free memory
-			((LastHttpContent) msg).release();
+			if(lastHttpContent.refCnt() > 0)
+				lastHttpContent.release();
+			
 			// send decoded request to next handler (requestFilterationHandler)
 			ctx.fireChannelRead(request);
 		}
@@ -92,16 +97,14 @@ public class RequestDecoderHandler extends ChannelInboundHandlerAdapter{
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		// construct Error Response
-		LinkedHashMap<String, Object> responseBody = new LinkedHashMap<String, Object>();
-		
+		JsonObject json = new JsonObject();
 		// set Http status code
-		responseBody.put("code", HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
-		responseBody.put("type", HttpResponseStatus.INTERNAL_SERVER_ERROR);
-		responseBody.put("errMessage", cause.getMessage());
+		json.addProperty("statusCode", HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+		json.addProperty("errMessage", cause.getMessage());
 	
 		cause.printStackTrace();
 		
 		// send response to ResponseEncoderHandler
-		ctx.writeAndFlush(responseBody);
+		ctx.writeAndFlush(json);
 	}
 }
