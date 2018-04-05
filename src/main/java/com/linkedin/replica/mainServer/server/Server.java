@@ -11,6 +11,7 @@ import com.linkedin.replica.mainServer.server.handlers.ResponseEncoderHandler;
 
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -47,10 +48,10 @@ public class Server {
         	ServerBootstrap server = new ServerBootstrap();
         	server.group(bossGroup, workerGroup) // setting EventLoopGroups
         			.channel(NioServerSocketChannel.class) // set channel to NIO(non-blocking IO) transport channel
-        			.childHandler(new ChannelInitializer<NioServerSocketChannel>() { // initialize channel
+        			.childHandler(new ChannelInitializer<NioSocketChannel>() { // initialize channel
         				
 						@Override
-						protected void initChannel(NioServerSocketChannel channel) throws Exception {
+						protected void initChannel(NioSocketChannel channel) throws Exception {
 							channel.pipeline().addLast(new HttpRequestDecoder()); // decode request bytes to FullHttpRequest (HttpRequest, HttpRequestContent, LastHttpRequestContent).
 							channel.pipeline().addLast(new HttpResponseEncoder());	 // encode FullHttpResponse to bytes.
 							channel.pipeline().addLast(new ResponseEncoderHandler()); // encode response object model into FullHttpResponse.
