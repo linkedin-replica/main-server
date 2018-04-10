@@ -57,14 +57,12 @@ public class RequestFilterationHandler extends ChannelInboundHandlerAdapter {
 			// Validate and extract user Id
 
 			String secretKey = Configuration.getInstance().getAppConfigProp("secret.key");
-
 			if(token != null) {
 				if(validateToken(token, secretKey))
 					request.setUserId(getClaims(token, secretKey).getBody().getId());
 				else
 					throw new MainServerException("Failed to validate token");
 			}
-
 			ctx.fireChannelRead(request);
 		}
 	}
@@ -90,7 +88,6 @@ public class RequestFilterationHandler extends ChannelInboundHandlerAdapter {
 	 */
 
 	private static boolean validateToken(String token, String secretKey) {
-
 		try {
 			getClaims(token, secretKey);
 			return true;

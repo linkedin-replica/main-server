@@ -2,8 +2,10 @@ package com.linkedin.replica.mainServer.server.handlers;
 
 import java.util.UUID;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.linkedin.replica.mainServer.config.Configuration;
 import com.linkedin.replica.mainServer.messaging.MessageQueueConnection;
 import com.linkedin.replica.mainServer.messaging.OnResponseListener;
@@ -14,6 +16,7 @@ import com.rabbitmq.client.Channel;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 
 public class RequestProcessingHandler extends ChannelInboundHandlerAdapter implements OnResponseListener{
@@ -44,7 +47,7 @@ public class RequestProcessingHandler extends ChannelInboundHandlerAdapter imple
 	                .correlationId(corrId)
 	                .replyTo(Configuration.getInstance().getAppConfigProp("rabbitmq.queue.name"))
 	                .build();
-	        
+
 	        json =  parse(request.getBody(), request.getQueryParams());
 	        if(request.getUserId() != null)
 	        	json.addProperty("userId",request.getUserId());
@@ -67,11 +70,20 @@ public class RequestProcessingHandler extends ChannelInboundHandlerAdapter imple
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
 			throws Exception {
-		cause.printStackTrace();
+		JsonObject json = new JsonObject();
+		if(cause instanceof JsonParseException || cause instanceof JsonSyntaxException){
+			json.addProperty("statusCode", HttpResponseStatus.BAD_REQUEST.code());
+			json.addProperty("errMessage", "Invalid Json body.");
+		}else{
+			json.addProperty("statusCode", HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+			json.addProperty("errMessage", cause.getMessage());
+			cause.printStackTrace();
+		}
+		
+		ctx.writeAndFlush(json);
 	}
 
 	public void onResponse(String response) {
-//		System.out.println("Response is received : "+response);
 		ctx.writeAndFlush(response);
 	}
 	
