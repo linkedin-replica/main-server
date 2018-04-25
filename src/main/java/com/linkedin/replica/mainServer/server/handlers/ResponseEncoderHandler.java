@@ -29,6 +29,9 @@ public class ResponseEncoderHandler extends ChannelOutboundHandlerAdapter{
 					Unpooled.copiedBuffer(out.toString(CharsetUtil.UTF_8), CharsetUtil.UTF_8));
 
 		// set headers
+		response.headers().set(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+		response.headers().set(ACCESS_CONTROL_ALLOW_METHODS, "GET, POST, PUT, DELETE, OPTIONS");
+		response.headers().set(ACCESS_CONTROL_ALLOW_HEADERS, "access-token, access-control-allow-origin, Content-Type, Accept");
 	    response.headers().set(CONTENT_TYPE, "application/json; charset=UTF-8");
 	    // write response to HttpResponseEncoder 
 		ChannelFuture future = ctx.writeAndFlush(response);

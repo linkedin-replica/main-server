@@ -53,7 +53,6 @@ public class RequestFilterationHandler extends ChannelInboundHandlerAdapter {
 				throw new MainServerException("Request Body must not be empty.");
 
 			String token = request.getHeaders().get("access-token");
-
 			// Validate and extract user Id
 
 			String secretKey = Configuration.getInstance().getAppConfigProp("secret.key");
