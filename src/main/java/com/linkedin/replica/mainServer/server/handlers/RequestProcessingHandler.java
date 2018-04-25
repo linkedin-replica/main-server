@@ -16,6 +16,7 @@ import com.rabbitmq.client.Channel;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 
@@ -28,7 +29,7 @@ public class RequestProcessingHandler extends ChannelInboundHandlerAdapter imple
 		Request request = (Request) msg;
 		JsonObject json;
 		
-		if(request.getRequestURI().equals(Configuration.getInstance().getAppConfigProp("health.endpoint"))){
+		if(request.getRequestURI().equals(Configuration.getInstance().getAppConfigProp("health.endpoint")) || request.getMethod().equals(HttpMethod.OPTIONS)){
 			json = new JsonObject();
 			json.addProperty("statusCode", 200);
 			ctx.writeAndFlush(json);

@@ -58,7 +58,7 @@ public class RequestDecoderHandler extends ChannelInboundHandlerAdapter{
 			
 			if(uriContents.length >= 4)
 				request.setFuncName(uriContents[3]);
-			
+
 			request.setHeaders(httpRequest.headers());
 			request.setMethod(httpRequest.method());
 		}
